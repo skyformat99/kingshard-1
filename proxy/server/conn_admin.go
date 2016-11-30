@@ -27,6 +27,7 @@ import (
 	"github.com/flike/kingshard/core/golog"
 	"github.com/flike/kingshard/mysql"
 	"github.com/flike/kingshard/sqlparser"
+	"github.com/flike/kingshard/config"
 )
 
 const (
@@ -524,14 +525,21 @@ func (c *ClientConn) handleShowSchemaConfig() (*mysql.Resultset, error) {
 		},
 	)
 
-	schemaConfig := c.proxy.cfg.Schema
-	shardRule := schemaConfig.ShardRule
+	//schemaConfig := c.proxy.cfg.Schemas
+	db := c.schema.db
+	var shardRule []config.ShardConfig
+	for _, schemaConfig := range c.proxy.cfg.Schemas{
+		if schemaConfig.DB == db {
+			shardRule = schemaConfig.ShardRule
+			break;
+		}
+	}
 
 	for _, r := range shardRule {
 		rows = append(
 			rows,
 			[]string{
-				schemaConfig.DB,
+				db,
 				r.Table,
 				r.Type,
 				r.Key,

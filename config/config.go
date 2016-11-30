@@ -34,7 +34,7 @@ type Config struct {
 	Charset     string       `yaml:"proxy_charset"`
 	Nodes       []NodeConfig `yaml:"nodes"`
 
-	Schema SchemaConfig `yaml:"schema"`
+	Schemas []SchemaConfig `yaml:"schemas"`
 }
 
 //node节点对应的配置

@@ -28,10 +28,13 @@ func (c *ClientConn) handleUseDB(dbName string) error {
 	if len(dbName) == 0 {
 		return fmt.Errorf("must have database, the length of dbName is zero")
 	}
-	if c.schema == nil {
+
+	schema := c.proxy.GetSchema(dbName)
+	if schema == nil {
 		return mysql.NewDefaultError(mysql.ER_NO_DB_ERROR)
 	}
 
+	c.schema = schema
 	nodeName := c.schema.rule.DefaultRule.Nodes[0]
 
 	n := c.proxy.GetNode(nodeName)

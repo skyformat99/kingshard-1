@@ -77,7 +77,7 @@ type Server struct {
 
 	counter *Counter
 	nodes   map[string]*backend.Node
-	schema  *Schema
+	schemas  map[string]*Schema
 
 	listener net.Listener
 	running  bool
@@ -193,38 +193,53 @@ func (s *Server) parseNodes() error {
 	return nil
 }
 
-func (s *Server) parseSchema() error {
-	schemaCfg := s.cfg.Schema
-	if len(schemaCfg.Nodes) == 0 {
-		return fmt.Errorf("schema [%s] must have a node.", schemaCfg.DB)
+func (s *Server) parseSchemas() error {
+	cfg := s.cfg
+	s.schemas = make(map[string]*Schema, len(cfg.Schemas))
+	for _, v := range cfg.Schemas {
+		if _, ok := s.schemas[v.DB]; ok {
+			return fmt.Errorf("duplicate schema [%s].", v.DB)
+		}
+		n, err := s.parseSchema(v)
+		if err != nil {
+			return err
+		}
+		s.schemas[v.DB] = n
+	}
+
+	return nil
+}
+
+func (s *Server) parseSchema(cfg config.SchemaConfig) (*Schema, error) {
+	if len(cfg.Nodes) == 0 {
+		return nil, fmt.Errorf("schema [%s] must have a node...", cfg.DB)
 	}
 
 	nodes := make(map[string]*backend.Node)
-	for _, n := range schemaCfg.Nodes {
+	for _, n := range cfg.Nodes {
 		if s.GetNode(n) == nil {
-			return fmt.Errorf("schema [%s] node [%s] config is not exists.", schemaCfg.DB, n)
+			return nil, fmt.Errorf("schema [%s] node [%s] config is not exists.", cfg.DB, n)
 		}
 
 		if _, ok := nodes[n]; ok {
-			return fmt.Errorf("schema [%s] node [%s] duplicate.", schemaCfg.DB, n)
+			return nil, fmt.Errorf("schema [%s] node [%s] duplicate.", cfg.DB, n)
 		}
 
 		nodes[n] = s.GetNode(n)
 	}
 
-	rule, err := router.NewRouter(&schemaCfg)
+	rule, err := router.NewRouter(&cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	s.schema = &Schema{
-		db:    schemaCfg.DB,
+	schema := &Schema{
+		db:    cfg.DB,
 		nodes: nodes,
 		rule:  rule,
 	}
-	s.db = schemaCfg.DB
-
-	return nil
+	s.db = cfg.DB
+	return schema, nil
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
@@ -277,7 +292,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	if err := s.parseSchema(); err != nil {
+	if err := s.parseSchemas(); err != nil {
 		return nil, err
 	}
 
@@ -317,7 +332,7 @@ func (s *Server) newClientConn(co net.Conn) *ClientConn {
 	tcpConn.SetNoDelay(false)
 	c.c = tcpConn
 
-	c.schema = s.GetSchema()
+	c.schema = s.GetSchema(s.db)
 
 	c.pkg = mysql.NewPacketIO(tcpConn)
 	c.proxy = s
@@ -710,6 +725,6 @@ func (s *Server) GetNode(name string) *backend.Node {
 	return s.nodes[name]
 }
 
-func (s *Server) GetSchema() *Schema {
-	return s.schema
+func (s *Server) GetSchema(db string) *Schema {
+	return s.schemas[db]
 }

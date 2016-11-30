@@ -1,0 +1,102 @@
+# server listen addr
+addr : 0.0.0.0:9696
+
+# server user and password
+#user :  kingshard
+#password : kingshard
+
+ups : kingshard:kingshard,test:test
+
+# if set log_path, the sql log will write into log_path/sql.log,the system log
+# will write into log_path/sys.log
+log_path : E:\\go\\src\\github.com\\flike\\log
+
+# log level[debug|info|warn|error],default error
+log_level : debug
+
+# if set log_sql(on|off) off,the sql log will not output
+log_sql: on
+ 
+# only log the query that take more than slow_log_time ms
+#slow_log_time : 100
+
+# the path of blacklist sql file
+# all these sqls in the file will been forbidden by kingshard
+#blacklist_sql_file: /Users/flike/blacklist
+
+# only allow this ip list ip to connect kingshard
+#allow_ips: 127.0.0.1
+
+# the charset of kingshard, if you don't set this item
+# the default charset of kingshard is utf8.
+#proxy_charset: gbk
+
+# node is an agenda for real remote mysql server.
+nodes :
+- 
+    name : node1 
+
+    # default max conns for mysql server
+    max_conns_limit : 32
+
+    # all mysql in a node must have the same user and password
+    user :  kingshard 
+    password : kingshard
+
+    # master represents a real mysql master server 
+    master : 10.20.80.219:3306
+
+    # slave represents a real mysql salve server,and the number after '@' is 
+    # read load weight of this slave.
+    #slave : 192.168.59.101:3307@2,192.168.59.101:3307@3
+    down_after_noalive : 32
+- 
+    name : node2 
+
+    # default max conns for mysql server
+    max_conns_limit : 32
+
+    # all mysql in a node must have the same user and password
+    user :  kingshard 
+    password : kingshard
+
+    # master represents a real mysql master server 
+    master : 10.20.69.225:3306
+
+    # slave represents a real mysql salve server 
+    #slave : 
+
+    # down mysql after N seconds noalive
+    # 0 will no down
+    down_after_noalive: 32
+
+# schema defines sharding rules, the db is the sharding table database.
+schemas :
+-
+    db : ods_log_db
+    nodes: [node1,node2]
+    default: node1      
+    shard:
+    -
+       table: xjgo_bigtable_log
+       key: record_date
+       type: date_day
+       nodes: [node1,node2]
+       date_range: [20161030-20161030, 20161031-20161101]
+    -
+       table: test
+       key: record_date
+       type: date_day
+       nodes: [node1,node2]
+       date_range: [20161030-20161030, 20161031-20161031]
+- 
+    db : ods_log_db2
+    nodes: [node1,node2]
+    default: node1      
+    shard:
+    -
+       table: xjgo_bigtable_log_tw
+       key: record_date
+       type: date_day
+       nodes: [node1,node2]
+       date_range: [20161030-20161030, 20161031-20161031]

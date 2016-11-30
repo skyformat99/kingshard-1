@@ -256,7 +256,7 @@ func (c *ClientConn) readHandshakeResponse() error {
 
 	} else {
 		//if connect without database, use default db
-		db = c.proxy.schema.db
+		db = c.schema.db
 	}
 	c.db = db
 
