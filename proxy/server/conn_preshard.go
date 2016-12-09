@@ -46,6 +46,20 @@ func (c *ClientConn) preHandleShard(sql string) (bool, error) {
 	var err error
 	var executeDB *ExecuteDB
 
+	dbName, err := sqlparser.GetDBName(sql)
+	if dbName != "" {
+		schema := c.getSchema(dbName)
+		if(schema != nil){
+			c.schema = schema
+		}
+	} else if c.db == "" {
+		return false, mysql.NewDefaultError(mysql.ER_NO_DB_ERROR)
+	}
+
+	if c.schema == nil {
+		return false, mysql.NewDefaultError(mysql.ER_NO_DB_ERROR)
+	}
+
 	if len(sql) == 0 {
 		return false, errors.ErrCmdUnsupport
 	}

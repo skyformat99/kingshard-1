@@ -141,11 +141,11 @@ func (c *ClientConn) getBackendConn(n *backend.Node, fromSlave bool) (co *backen
 	}
 
 	if len(c.proxy.UPs) > 1 {
-		if err = co.ChangeUser(c.user, c.proxy.UPs[c.user], c.db, c.collation); err != nil {
+		if err = co.ChangeUser(c.user, c.proxy.UPs[c.user], c.schema.db, c.collation); err != nil {
 			return
 		}
 	} else {
-		if err = co.UseDB(c.db); err != nil {
+		if err = co.UseDB(c.schema.db); err != nil {
 			return
 		}
 

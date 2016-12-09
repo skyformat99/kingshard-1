@@ -332,7 +332,8 @@ func (s *Server) newClientConn(co net.Conn) *ClientConn {
 	tcpConn.SetNoDelay(false)
 	c.c = tcpConn
 
-	c.schema = s.GetSchema(s.db)
+	//c.schema = s.GetSchema(s.db)
+	c.schemas = s.schemas
 
 	c.pkg = mysql.NewPacketIO(tcpConn)
 	c.proxy = s

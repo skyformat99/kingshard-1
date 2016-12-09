@@ -53,6 +53,8 @@ type ClientConn struct {
 
 	schema *Schema
 
+	schemas map[string]*Schema
+
 	txConns map[*backend.Node]*backend.BackendConn
 
 	closed bool
@@ -245,7 +247,7 @@ func (c *ClientConn) readHandshakeResponse() error {
 
 	pos += authLen
 
-	var db string
+	/*var db string
 	if c.capability&mysql.CLIENT_CONNECT_WITH_DB > 0 {
 		if len(data[pos:]) == 0 {
 			return nil
@@ -258,7 +260,7 @@ func (c *ClientConn) readHandshakeResponse() error {
 		//if connect without database, use default db
 		db = c.schema.db
 	}
-	c.db = db
+	c.db = db*/
 
 	return nil
 }
@@ -407,4 +409,8 @@ func (c *ClientConn) writeEOFBatch(total []byte, status uint16, direct bool) ([]
 	}
 
 	return c.writePacketBatch(total, data, direct)
+}
+
+func (c *ClientConn) getSchema(db string) *Schema {
+	return c.schemas[db]
 }

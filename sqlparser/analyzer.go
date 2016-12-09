@@ -43,6 +43,23 @@ func GetDBName(sql string) (string, error) {
 		return string(stmt.Table.Qualifier), nil
 	case *Delete:
 		return string(stmt.Table.Qualifier), nil
+	case *Replace:
+		return string(stmt.Table.Qualifier), nil
+	case *Select:
+		tableName := ""
+		switch v := (stmt.From[0]).(type) {
+		case *AliasedTableExpr:
+			tableName = String(v.Expr)
+		case *JoinTableExpr:
+			if ate, ok := (v.LeftExpr).(*AliasedTableExpr); ok {
+				tableName = String(ate.Expr)
+			} else {
+				tableName = String(v)
+			}
+		default:
+			tableName = String(v)
+		}
+		return GetDBNameFromTableName(tableName), nil
 	}
 	return "", fmt.Errorf("statement '%s' is not a dml", sql)
 }
@@ -58,6 +75,19 @@ func GetTableName(token string) string {
 	} else {
 		return strings.Trim(vec[0], "`")
 	}
+}
+
+func GetDBNameFromTableName(token string) string {
+	if len(token) == 0 {
+		return ""
+	}
+
+	vec := strings.SplitN(token, ".", 2)
+	if len(vec) == 2 {
+		return strings.Trim(vec[0], "`")
+	}
+
+	return ""
 }
 
 func GetInsertTableName(token string) string {

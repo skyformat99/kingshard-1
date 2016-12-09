@@ -29,7 +29,7 @@ func (c *ClientConn) handleUseDB(dbName string) error {
 		return fmt.Errorf("must have database, the length of dbName is zero")
 	}
 
-	schema := c.proxy.GetSchema(dbName)
+	schema := c.getSchema(dbName)
 	if schema == nil {
 		return mysql.NewDefaultError(mysql.ER_NO_DB_ERROR)
 	}
